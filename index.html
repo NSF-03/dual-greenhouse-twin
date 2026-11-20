@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dual-greenhouse digital twin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* layout: one overview diagram at the top; each box links to a flow diagram of that part below */
+:root{
+  --bg:#f7f8f6; --card:#ffffff; --fg:#1d2420; --muted:#5d6b64; --line:#d5dcd7;
+  --teal:#1b8a72; --orange:#b8703a; --blue:#5b7fa6; --purple:#7f6bb3;
+  --f-green:#e8f1ea; --f-orange:#fdf3e4; --f-blue:#eef3f9; --f-back:#f3f9f5; --f-white:#ffffff; --f-purple:#f1ecf9;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-head:"Space Grotesk","Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --card:#1c2320; --fg:#e7ece9; --muted:#9fb0a8; --line:#34403a;
+  --teal:#4cc0a4; --orange:#e0a06a; --blue:#8fb0d6; --purple:#b3a2e0;
+  --f-green:#1d2b25; --f-orange:#30271a; --f-blue:#1e2733; --f-back:#18211d; --f-white:#222b27; --f-purple:#282338;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --card:#1c2320; --fg:#e7ece9; --muted:#9fb0a8; --line:#34403a;
+  --teal:#4cc0a4; --orange:#e0a06a; --blue:#8fb0d6; --purple:#b3a2e0;
+  --f-green:#1d2b25; --f-orange:#30271a; --f-blue:#1e2733; --f-back:#18211d; --f-white:#222b27; --f-purple:#282338;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.55;
+  padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-family:var(--font-head);font-weight:600;font-size:27px;line-height:1.2;margin:0;text-wrap:balance}
+h2{font-family:var(--font-head);font-weight:600;font-size:20px;line-height:1.25;margin:0;text-wrap:balance}
+p{margin:0;max-width:76ch}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:2px;max-width:82ch}
+.diagram{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto}
+.diagram svg,.part svg{display:block;min-width:880px;width:100%;height:auto;font-family:var(--font-body)}
+.tt{font-size:16.5px;font-weight:600;fill:var(--fg)}
+.t2{font-size:14px;font-weight:600;fill:var(--fg)}
+.tb{font-size:14px;fill:var(--fg)}
+.tl{font-size:12.5px;fill:var(--muted)}
+.tc{font-size:15px;font-weight:600;fill:var(--fg)}
+.b-green{fill:var(--f-green);stroke:var(--teal)}
+.b-orange{fill:var(--f-orange);stroke:var(--orange)}
+.b-blue{fill:var(--f-blue);stroke:var(--blue)}
+.b-white{fill:var(--f-white);stroke:var(--teal)}
+.b-purple{fill:var(--f-purple);stroke:var(--purple)}
+.c-back{fill:var(--f-back);stroke:var(--teal);stroke-opacity:.45}
+.c-off{fill:none;stroke:var(--purple);stroke-dasharray:5 4}
+.box{stroke-width:1.4}
+.lt{stroke:var(--teal);stroke-width:1.8;fill:none}
+.lo{stroke:var(--orange);stroke-width:1.8;fill:none}
+a .box{transition:stroke-width .12s}
+a:hover .box,a:focus-visible .box{stroke-width:3}
+svg a{cursor:pointer;outline:none}
+.part{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;scroll-margin-top:10px}
+.part header{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.back{font-size:13px;color:var(--teal);text-decoration:none;white-space:nowrap}
+.back:hover,.back:focus-visible{text-decoration:underline}
+.scroll{overflow-x:auto}
+.status{color:var(--muted);font-size:14px;max-width:none}
+.status b{color:var(--fg);font-weight:600}
+@media (max-width:720px){h1{font-size:22px}.part{padding:14px 12px}}
+@media print{.part,.diagram{break-inside:avoid}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:10px" id="overview">
+  <h1>Dual-greenhouse digital twin</h1>
+  <ol class="steps">
+    <li>Sensors and cameras in the two greenhouses are read by small local boards, and a programmable logic controller (PLC) switches the equipment.</li>
+    <li>One site network carries all readings to the project laptop.</li>
+    <li>On the laptop the readings pass through four steps: they are checked and stored, the twin model estimates the state and forecasts two hours ahead, a controller proposes setpoints within limits, and the interface sends approved setpoints back to the equipment.</li>
+    <li>The Unity application shows the state of both greenhouses, and an operator can propose and approve a command there.</li>
+    <li>The stored records are used offline to calibrate the model and to train and evaluate a controller. Only an approved controller returns to the decision step.</li>
+  </ol>
+  <p style="color:var(--muted)">Click a box to see the flow inside that part.</p>
+</header>
+
+<div class="diagram">
+<svg viewBox="0 0 1000 710" role="img" aria-labelledby="dt dd">
+<title id="dt">Overview of the dual-greenhouse digital twin</title>
+<desc id="dd">Greenhouses, local controllers and site network in the top row; four backend steps and a database on the project laptop; the Unity application and the offline model work below.</desc>
+<defs>
+  <marker id="mt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--teal)"/></marker>
+  <marker id="mo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--orange)"/></marker>
+</defs>
+
+<a href="#greenhouses"><g transform="translate(20,20)">
+  <rect class="box b-green" width="280" height="124" rx="8"/>
+  <text class="tt" x="14" y="28">Greenhouses A and B</text>
+  <text class="tb" x="14" y="52">Two glasshouses of 5.2 m² each,</text>
+  <text class="tb" x="14" y="71">with tomato plants, sensors,</text>
+  <text class="tb" x="14" y="90">cameras, a heater, grow lights,</text>
+  <text class="tb" x="14" y="109">roof vents and drip irrigation.</text>
+</g></a>
+<a href="#controllers"><g transform="translate(360,20)">
+  <rect class="box b-orange" width="280" height="124" rx="8"/>
+  <text class="tt" x="14" y="28">Local controllers</text>
+  <text class="tb" x="14" y="52">A programmable logic controller</text>
+  <text class="tb" x="14" y="71">(PLC) switches the heater and</text>
+  <text class="tb" x="14" y="90">grow lights. Raspberry Pi and</text>
+  <text class="tb" x="14" y="109">ESP32 boards read the sensors.</text>
+</g></a>
+<a href="#controllers"><g transform="translate(700,20)">
+  <rect class="box b-blue" width="280" height="124" rx="8"/>
+  <text class="tt" x="14" y="28">Site network</text>
+  <text class="tb" x="14" y="52">One network switch joins the</text>
+  <text class="tb" x="14" y="71">controllers and the laptop, so</text>
+  <text class="tb" x="14" y="90">all readings arrive in one</text>
+  <text class="tb" x="14" y="109">message format.</text>
+</g></a>
+<line class="lt" x1="302" y1="64" x2="356" y2="64" marker-end="url(#mt)"/>
+<line class="lo" x1="358" y1="100" x2="304" y2="100" marker-end="url(#mo)"/>
+<line class="lt" x1="642" y1="64" x2="696" y2="64" marker-end="url(#mt)"/>
+<line class="lo" x1="698" y1="100" x2="644" y2="100" marker-end="url(#mo)"/>
+
+<rect class="c-back" x="20" y="206" width="960" height="284" rx="10" stroke-width="1.2"/>
+<text class="tc" x="500" y="230" text-anchor="middle">Python backend on the project laptop</text>
+
+<path class="lt" d="M800 146 V168 H147 V240" marker-end="url(#mt)"/>
+<text class="tl" x="470" y="161" text-anchor="middle">readings</text>
+<line class="lo" x1="880" y1="244" x2="880" y2="148" marker-end="url(#mo)"/>
+<text class="tl" x="872" y="193" text-anchor="end">approved setpoints</text>
+
+<a href="#intake"><g transform="translate(40,244)">
+  <rect class="box b-white" width="215" height="126" rx="8"/>
+  <text class="tt" x="12" y="26">1 Data intake and</text>
+  <text class="tt" x="12" y="46">quality check</text>
+  <text class="tb" x="12" y="72">Receives each reading,</text>
+  <text class="tb" x="12" y="91">checks and corrects it,</text>
+  <text class="tb" x="12" y="110">then stores it.</text>
+</g></a>
+<a href="#twin"><g transform="translate(275,244)">
+  <rect class="box b-white" width="215" height="126" rx="8"/>
+  <text class="tt" x="12" y="26">2 Twin model</text>
+  <text class="tb" x="12" y="53">Estimates the present</text>
+  <text class="tb" x="12" y="72">state of each greenhouse</text>
+  <text class="tb" x="12" y="91">and forecasts the next</text>
+  <text class="tb" x="12" y="110">two hours.</text>
+</g></a>
+<a href="#decision"><g transform="translate(510,244)">
+  <rect class="box b-white" width="215" height="126" rx="8"/>
+  <text class="tt" x="12" y="26">3 Decision</text>
+  <text class="tb" x="12" y="53">Proposes setpoints and</text>
+  <text class="tb" x="12" y="72">keeps them within limits.</text>
+  <text class="tb" x="12" y="91">A person's command waits</text>
+  <text class="tb" x="12" y="110">for approval.</text>
+</g></a>
+<a href="#interface"><g transform="translate(745,244)">
+  <rect class="box b-white" width="215" height="126" rx="8"/>
+  <text class="tt" x="12" y="26">4 Interface and</text>
+  <text class="tt" x="12" y="46">event log</text>
+  <text class="tb" x="12" y="72">Sends state to Unity and</text>
+  <text class="tb" x="12" y="91">approved commands to the</text>
+  <text class="tb" x="12" y="110">equipment. Logs commands.</text>
+</g></a>
+<line class="lt" x1="257" y1="307" x2="272" y2="307" marker-end="url(#mt)"/>
+<line class="lt" x1="492" y1="307" x2="507" y2="307" marker-end="url(#mt)"/>
+<line class="lt" x1="727" y1="292" x2="742" y2="292" marker-end="url(#mt)"/>
+<line class="lo" x1="743" y1="324" x2="728" y2="324" marker-end="url(#mo)"/>
+
+<line class="lt" x1="147" y1="372" x2="147" y2="388" marker-end="url(#mt)"/>
+<path class="lt" d="M300 372 V433 H259" marker-end="url(#mt)"/>
+<a href="#database"><g transform="translate(40,392)">
+  <rect class="box b-white" width="215" height="82" rx="8"/>
+  <text class="tt" x="12" y="26">Database</text>
+  <text class="tb" x="12" y="50">Keeps checked readings</text>
+  <text class="tb" x="12" y="69">and estimated states.</text>
+</g></a>
+
+<line class="lt" x1="147" y1="476" x2="147" y2="546" marker-end="url(#mt)"/>
+<text class="tl" x="156" y="517">records</text>
+<line class="lo" x1="382" y1="532" x2="382" y2="374" marker-end="url(#mo)"/>
+<text class="tl" x="374" y="517" text-anchor="end">calibrated parameters</text>
+<line class="lo" x1="600" y1="532" x2="600" y2="374" marker-end="url(#mo)"/>
+<text class="tl" x="592" y="517" text-anchor="end">approved controller</text>
+<line class="lt" x1="820" y1="372" x2="820" y2="546" marker-end="url(#mt)"/>
+<text class="tl" x="812" y="517" text-anchor="end">state and forecast</text>
+<line class="lo" x1="900" y1="550" x2="900" y2="374" marker-end="url(#mo)"/>
+<text class="tl" x="908" y="510">proposals and</text>
+<text class="tl" x="908" y="526">approvals</text>
+
+<a href="#offline">
+<rect class="c-off" x="20" y="532" width="650" height="164" rx="10" stroke-width="1.2"/>
+<g transform="translate(40,550)">
+  <rect class="box b-purple" width="190" height="102" rx="8"/>
+  <text class="tt" x="12" y="26">Calibration</text>
+  <text class="tb" x="12" y="50">Fits the model</text>
+  <text class="tb" x="12" y="69">parameters to recorded</text>
+  <text class="tb" x="12" y="88">data.</text>
+</g>
+<g transform="translate(250,550)">
+  <rect class="box b-purple" width="190" height="102" rx="8"/>
+  <text class="tt" x="12" y="26">Training</text>
+  <text class="tb" x="12" y="50">A controller learns by</text>
+  <text class="tb" x="12" y="69">trial in a simulator.</text>
+</g>
+<g transform="translate(460,550)">
+  <rect class="box b-purple" width="190" height="102" rx="8"/>
+  <text class="tt" x="12" y="26">Evaluation</text>
+  <text class="tb" x="12" y="50">Compares the new and</text>
+  <text class="tb" x="12" y="69">current controllers</text>
+  <text class="tb" x="12" y="88">in the same weather.</text>
+</g>
+<text class="tc" x="40" y="680">Offline model work</text>
+<text class="tl" x="196" y="680">run when the model parameters or the controller change</text>
+</a>
+<line class="lt" x1="232" y1="601" x2="247" y2="601" marker-end="url(#mt)"/>
+<line class="lt" x1="442" y1="601" x2="457" y2="601" marker-end="url(#mt)"/>
+
+<a href="#unity"><g transform="translate(700,550)">
+  <rect class="box b-blue" width="280" height="124" rx="8"/>
+  <text class="tt" x="14" y="28">Unity 3D application</text>
+  <text class="tb" x="14" y="52">Shows both greenhouses in three</text>
+  <text class="tb" x="14" y="71">dimensions with live readings.</text>
+  <text class="tb" x="14" y="90">An operator can propose and</text>
+  <text class="tb" x="14" y="109">approve a command here.</text>
+</g></a>
+</svg>
+</div>
+
+<section class="part" id="greenhouses"><header><h2>Greenhouses and equipment</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-greenhouses" role="img" aria-label="Flow inside the greenhouses"></svg></div>
+<p class="status"><b>Status, November 2026.</b> The second glasshouse has been delivered and its installation is planned for 26 November 2026. Quantities follow the purchase list of November 2026 and are still to be confirmed.</p></section>
+
+<section class="part" id="controllers"><header><h2>Local controllers and site network</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-controllers" role="img" aria-label="Flow inside the local controllers and site network"></svg></div>
+<p class="status"><b>Status, November 2026.</b> The combination of PLC, Raspberry Pi and ESP32 was agreed at the project meeting in November 2026. The hardware is not yet installed.</p></section>
+
+<section class="part" id="intake"><header><h2>1 Data intake and quality check</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-intake" role="img" aria-label="Flow inside data intake and quality check"></svg></div>
+<p class="status"><b>Status, November 2026.</b> A prototype accepts temperature and relative humidity from a simulated controller. CO2, light, energy and camera data are to be added.</p></section>
+
+<section class="part" id="twin"><header><h2>2 Twin model</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-twin" role="img" aria-label="Flow inside the twin model"></svg></div>
+<p class="status"><b>Status, November 2026.</b> A thermal model with five state variables has been written and run on ten winters of hourly weather data. It is not yet calibrated, and a crop growth model has not been started.</p></section>
+
+<section class="part" id="decision"><header><h2>3 Decision</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-decision" role="img" aria-label="Flow inside the decision step"></svg></div>
+<p class="status"><b>Status, November 2026.</b> A rule-based controller runs in the prototype. A training environment for a reinforcement learning controller exists, and the learned controller of work package 4 is not yet connected.</p></section>
+
+<section class="part" id="interface"><header><h2>4 Interface and event log</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-interface" role="img" aria-label="Flow inside the interface and event log"></svg></div>
+<p class="status"><b>Status, November 2026.</b> A link between the backend and Unity was tested with simulated data on 3 November 2026. The approval steps and the event log are planned and will follow the single-greenhouse twin.</p></section>
+
+<section class="part" id="unity"><header><h2>Unity 3D application</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-unity" role="img" aria-label="Flow inside the Unity application"></svg></div>
+<p class="status"><b>Status, November 2026.</b> The scene with both glasshouses has been built and runs on simulated data. Live readings will replace the simulated data once the sensors are installed.</p></section>
+
+<section class="part" id="database"><header><h2>Database</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-database" role="img" aria-label="Flow through the database"></svg></div>
+<p class="status"><b>Status, November 2026.</b> The prototype stores temperature and relative humidity. Tables for the other readings, commands and events are to be added.</p></section>
+
+<section class="part" id="offline"><header><h2>Offline model work</h2><a class="back" href="#overview">Back to overview</a></header>
+<div class="scroll"><svg id="d-offline" role="img" aria-label="Flow inside the offline model work"></svg></div>
+<p class="status"><b>Status, November 2026.</b> Hourly weather data for ten winters have been prepared. Calibration will start when the installed greenhouses provide measurements.</p></section>
+</div>
+
+<script>
+var PARTS={
+greenhouses:{seq:false,cls:'b-green',
+ mid:[['Sensors in each greenhouse',['6 thermocouples, including water and soil','8 to 10 thermistors for air temperature','1 temperature and relative humidity sensor','1 CO2 sensor','1 sensor for the light that plants use','1 ultraviolet sensor','1 electric current sensor for energy use','Cameras: colour, near-infrared, thermal']],
+      ['Equipment in each greenhouse',['1 oil-filled electric heater','2 grow lights','1 roof-vent actuator','1 water pump with drip irrigation','Water tank shared by both greenhouses']],
+      ['For the whole site',['1 solar radiation sensor outdoors']]]},
+controllers:{seq:true,cls:'b-orange',
+ mid:['Raspberry Pi and ESP32 boards read the sensors and take a camera image every 10 to 15 minutes.','Eight-channel acquisition modules collect the thermistor signals.','A programmable logic controller (PLC) switches the heater and the grow lights.','All boards and the PLC share one network switch with the project laptop.','The PLC applies its own safety limits before it carries out a command.']},
+intake:{seq:true,cls:'b-white',
+ mid:['Receive a reading with its time, greenhouse, sensor name, value and unit.','Check the reading: is the value possible, is the time recent, is anything missing?','Correct known sensor offsets, and mark the reading as good, doubtful or rejected.','Store every checked reading and its mark in the database.','Pass the checked readings and device states to the twin model.']},
+twin:{seq:true,cls:'b-white',
+ mid:['Start from the last estimated state: air, glass, floor and pot temperatures, air moisture, heater temperature.','Calculate the next state from the weather and from what the heater, lights and vents are doing.','Correct the calculated state with the newest checked readings.','Forecast the next two hours.','Compare earlier forecasts with the readings that followed, and report the error.']},
+decision:{seq:true,cls:'b-white',
+ mid:['Read the estimated state and the forecast.','An automatic controller proposes setpoints, such as the heating temperature and the vent-opening temperature.','Check every setpoint, and every command from a person, against the fixed limits.','Setpoints from the automatic controller that pass the check go on directly.','A command from a person waits until the operator approves it.']},
+interface:{seq:true,cls:'b-white',
+ mid:['Receive a proposed command or an approval from Unity and pass it to the decision step.','Receive from the decision step the state, the forecast and the setpoints that are within limits.','Send the approved setpoints to the local controllers.','The controller confirms that it received each setpoint.','A later reading shows whether the device really responded. The command is marked verified or failed.','Send the state, the forecast and the result of each command to Unity, and write every command to the event log.']},
+unity:{seq:false,cls:'b-blue',
+ mid:[['What it shows',['Both glasshouses at their real dimensions','The hedge on the north side and the sun position','Each sensor with its latest reading','Whether heater, lights and vents are on or open','Energy used so far','The two-hour forecast']],
+      ['What an operator can do',['Propose a command for a device','Approve or reject a waiting command','See whether the command was verified']]]},
+database:{seq:false,cls:'b-white',
+ mid:[['What is stored',['Every checked reading with its quality mark','Device states','Estimated states and forecasts','Forecast error']]]},
+offline:{seq:true,cls:'b-purple',
+ mid:['Calibration: fit the model parameters to recorded data, separately for each greenhouse.','Check the calibrated model on a period that was not used for fitting.','Training: a controller learns by trial and error in a simulator, which is the same model run on past weather.','Evaluation: run the new and the current controller in the same weather, and compare energy use and time outside the temperature limits.','Only a controller that passes evaluation is handed to the decision step.']}
+};
+(function(){
+var NS='http://www.w3.org/2000/svg',LH=19;
+function el(n,a,t){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;return e}
+function wrap(s,n){var w=s.split(' '),out=[],c='';for(var i=0;i<w.length;i++){var x=c?c+' '+w[i]:w[i];if(x.length>n&&c){out.push(c);c=w[i]}else c=x}if(c)out.push(c);return out}
+function build(id,d){
+  var svg=document.getElementById('d-'+id);if(!svg)return;
+  var SW=262,MX=322,MW=380,IX=MX+12,IW=MW-24,RX=762,gap=d.seq?22:10,y=12,mid=[];
+  d.mid.forEach(function(m,i){var rows=[],head=null;
+    if(d.seq){wrap((i+1)+'. '+m,44).forEach(function(l,j){rows.push([l,j?18:0])})}
+    else{head=m[0];m[1].forEach(function(b){wrap(b,40).forEach(function(l,j){rows.push([(j?'':'• ')+l,j?11:0])})})}
+    var h=10+(head?22:0)+rows.length*LH+8;mid.push({y:y,h:h,rows:rows,head:head});y+=h+gap});
+  var MH=y-gap+12;
+  function side(a){return a.map(function(it){var l=wrap(it[0],29);return{l:l,sub:it[1],h:10+l.length*LH+18+8}})}
+  function tot(a){return a.reduce(function(s,b){return s+b.h},0)+(a.length-1)*10}
+  var ins=side(d.in),outs=side(d.out),H=Math.max(MH,tot(ins),tot(outs)),y0=(H-MH)/2;
+  svg.setAttribute('viewBox','-2 -2 1028 '+(H+4));
+  svg.appendChild(el('rect',{class:'c-back',x:MX,y:y0,width:MW,height:MH,rx:10,'stroke-width':1.2}));
+  mid.forEach(function(m,i){var by=y0+m.y;
+    svg.appendChild(el('rect',{class:'box '+d.cls,x:IX,y:by,width:IW,height:m.h,rx:7}));
+    var ty=by+10+14;
+    if(m.head){svg.appendChild(el('text',{class:'t2',x:IX+12,y:ty},m.head));ty+=22}
+    m.rows.forEach(function(r){svg.appendChild(el('text',{class:'tb',x:IX+12+r[1],y:ty},r[0]));ty+=LH});
+    if(d.seq&&i<mid.length-1)svg.appendChild(el('line',{class:'lt',x1:MX+MW/2,y1:by+m.h+2,x2:MX+MW/2,y2:by+m.h+gap-3,'marker-end':'url(#mt)'}))});
+  var yin=d.seq?y0+mid[0].y+mid[0].h/2:y0+MH/2,last=mid[mid.length-1],yout=d.seq?y0+last.y+last.h/2:y0+MH/2;
+  function col(a,x,isIn){var yy=(H-tot(a))/2,ys=[];
+    a.forEach(function(b){svg.appendChild(el('rect',{class:'box b-blue',x:x,y:yy,width:SW,height:b.h,rx:7}));
+      var ty=yy+10+14;b.l.forEach(function(l){svg.appendChild(el('text',{class:'t2',x:x+12,y:ty},l));ty+=LH});
+      svg.appendChild(el('text',{class:'tl',x:x+12,y:ty-1},b.sub));ys.push(yy+b.h/2);yy+=b.h+10});
+    var bus=isIn?MX-30:MX+MW+30,t=isIn?yin:yout,all=ys.concat([t]),lo=Math.min.apply(null,all),hi=Math.max.apply(null,all);
+    if(hi-lo>1)svg.appendChild(el('line',{class:'lt',x1:bus,y1:lo,x2:bus,y2:hi}));
+    ys.forEach(function(v){if(isIn)svg.appendChild(el('line',{class:'lt',x1:x+SW+1,y1:v,x2:bus,y2:v}));
+      else svg.appendChild(el('line',{class:'lt',x1:bus,y1:v,x2:x-4,y2:v,'marker-end':'url(#mt)'}))});
+    if(isIn)svg.appendChild(el('line',{class:'lt',x1:bus,y1:t,x2:MX-4,y2:t,'marker-end':'url(#mt)'}));
+    else svg.appendChild(el('line',{class:'lt',x1:MX+MW+1,y1:t,x2:bus,y2:t}))}
+  col(ins,0,true);col(outs,RX,false);
+}
+var NAMES={greenhouses:'Greenhouses A and B',controllers:'Local controllers',intake:'1 Data intake and quality check',twin:'2 Twin model',decision:'3 Decision',interface:'4 Interface and event log',unity:'Unity 3D application',database:'Database',offline:'Offline model work'};
+var LINKS=[
+['Sunlight, outdoor temperature, wind','*outdoors','greenhouses'],
+['Electricity','*the site supply','greenhouses'],
+['Switching of heater, lights, vent, pump','controllers','greenhouses'],
+['Sensor signals and camera images','greenhouses','controllers'],
+['Actual state of each device','greenhouses','controllers'],
+['Readings in one message format','controllers','intake'],
+['Device states in the same format','controllers','intake'],
+['Checked readings and device states','intake','twin'],
+['Checked readings and device states','intake','database'],
+['Estimated state and two-hour forecast','twin','decision'],
+['Estimated states and forecast error','twin','database'],
+['State, forecast and setpoints within limits','decision','interface'],
+['Proposed commands and approvals','interface','decision'],
+['Approved setpoints','interface','controllers'],
+['State and forecast','interface','unity'],
+['Proposals and approvals','unity','interface'],
+['Stored records','database','offline'],
+['Hourly weather of past winters','*a weather archive','offline'],
+['Calibrated model parameters','offline','twin'],
+['Approved controller','offline','decision']];
+function nm(k){return k.charAt(0)=='*'?k.slice(1):NAMES[k]}
+for(var k in PARTS){PARTS[k].in=[];PARTS[k].out=[]}
+LINKS.forEach(function(l){if(PARTS[l[2]])PARTS[l[2]].in.push([l[0],'from '+nm(l[1])]);if(PARTS[l[1]])PARTS[l[1]].out.push([l[0],'to '+nm(l[2])])});
+for(var k in PARTS)build(k,PARTS[k]);
+})();
+</script>
+</body>
+</html>
